@@ -1,7 +1,10 @@
 # faust-avro-serializer
 
-This repo contains an improved version of the avro serializer from https://github.com/marcosschroh/python-schema-registry-client/. The idea behind this improvement was to avoid the need to give an Avro schema at the moment the serializer is created. This version makes a better integration with the faust library and it uses its [metadata](https://faust.readthedocs.io/en/latest/userguide/models.html#polymorphic-fields) capability inside the ``Record`` class to read the Avro schema dynamically.
-
+This repo contains an improved version of the avro serializer from
+https://github.com/marcosschroh/python-schema-registry-client/. It expects the schema
+to be stored in the record itself in order to mimic the behavior of Confluent's Avro SerDe.
+It uses Faust's [metadata](https://faust.readthedocs.io/en/latest/userguide/models.html#polymorphic-fields) capability inside the ``Record`` class to read the Avro schema 
+dynamically.
 ### Example
 
 ```python
@@ -25,5 +28,8 @@ client = SchemaRegistryClient("http://my-schema-registry:8081")
 serializer = FaustAvroSerializer(client,"my-subject")
 ``` 
 
-Now when the serializer calls its ``_dumps`` method, it will search for the ``__faust`` field inside the object it gets. If the serializer finds the field, it is going to search for the class and reads the ``_schema`` field containing the Avro schema.
- 
+When the serializer calls the ``_dumps`` method, it searches for the ``__faust`` field inside the
+record. 
+If the serializer finds the field, it is resolving the class and reads the ``_schema`` field 
+containing the Avro schema.
+

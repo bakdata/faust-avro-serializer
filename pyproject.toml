@@ -7,7 +7,7 @@ build-backend = "flit.buildapi"
 module = "faust_avro_serializer"
 dist-name = "faust-avro-serializer"
 author = "bakdata"
-home-page = "https://gitlab.bayer.com/sih/kafka-processing/faust-bootstrap"
+home-page = "https://github.com/bakdata/faust-avro-serializer"
 description-file="README.md"
 requires-python = ">=3.6"
 requires = [

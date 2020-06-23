@@ -33,7 +33,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         The schema is registered with the subject of 'topic-value'
         """
         if "__faust" not in obj or "ns" not in obj["__faust"]:
-            raise ValueError("The dictionary doesn't have the namespace metadata")
+            raise ValueError("Record does not have namespace metadata")
 
         model_class_name = obj["__faust"]["ns"]
 
@@ -43,7 +43,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         class_reference = registry[model_class_name]
 
         if not hasattr(class_reference, "_schema"):
-            raise MissingSchemaException("The object to serialize doesn't have a schema defined!")
+            raise MissingSchemaException("Record does not have schema defined in '_schema' field")
 
         schema_def = getattr(class_reference, "_schema")
 

@@ -76,7 +76,7 @@ def test_missing_schema_test(client):
     with pytest.raises(MissingSchemaException) as e:
         faust_serializer.dumps(dummy_model.to_representation())
     assert str(
-        e.value) == "The object to serialize doesn't have a schema defined!", "_schema class variable should have schema"
+        e.value) == "Record does not have schema defined in '_schema' field", "_schema class variable should have schema"
 
 
 def test_missing_metadata(client):
@@ -88,7 +88,7 @@ def test_missing_metadata(client):
         del dummy_dict["__faust"]
         faust_serializer.dumps(dummy_dict)
     assert str(
-        e.value) == "The dictionary doesn't have the namespace metadata", "Namespace for serialization should be there"
+        e.value) == "Record does not have namespace metadata", "Namespace for serialization should be there"
 
 
 def test_class_registry_not_exist(client):

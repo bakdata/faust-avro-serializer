@@ -18,7 +18,6 @@ resources:
       type: github
       name: bakdata/bakdata-project-templates
       endpoint: bot
-      ref: improvements_template
 
 
 stages:

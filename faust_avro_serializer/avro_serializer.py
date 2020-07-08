@@ -1,5 +1,4 @@
 import typing
-from typing import Any
 
 import faust
 from schema_registry.client import SchemaRegistryClient
@@ -13,6 +12,7 @@ class MissingSchemaException(Exception):
 
 
 class FaustAvroSerializer(MessageSerializer, faust.Codec):
+
     def __init__(self, client: SchemaRegistryClient, subject: str, is_key=False, **kwargs):
         self.schema_registry_client = client
         self.schema_subject = subject
@@ -25,7 +25,30 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         # method available on MessageSerializer
         return self.decode_message(s)
 
-    def _dumps(self, obj: Any) -> bytes:
+    @staticmethod
+    def clean_payload(payload: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+        """
+        Try to clean payload retrieve by faust.Record.to_representation.
+        All values inside payload should be native types and not faust.Record
+        On Faust versions <=1.9.0 Record.to_representation always returns a dict with native types
+        as a values which are compatible with fastavro.
+        On Faust 1.10.0 <= versions Record.to_representation always returns a dic but values
+        can also be faust.Record, so fastavro is incapable of serialize them
+        Args:
+            payload (dict): Payload to clean
+        Returns:
+            dict that represents the clean payload
+        """
+        return {
+            key: (
+                FaustAvroSerializer.clean_payload(value.to_representation())  # type: ignore
+                if isinstance(value, faust.Record)
+                else value
+            )
+            for key, value in payload.items()
+            }
+
+    def _dumps(self, obj: typing.Dict[str, typing.Any]) -> bytes:
         """
         Given a parsed avro schema, encode a record for the given topic.  The
         record is expected to be a dictionary.
@@ -49,6 +72,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
 
         avro_schema = AvroSchema(schema_def)
 
+        obj = self.clean_payload(obj)
         # method available on MessageSerializer
         return self.encode_record_with_schema(
             self.schema_subject, avro_schema, obj, is_key=self.is_key

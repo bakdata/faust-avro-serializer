@@ -28,12 +28,12 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
     @staticmethod
     def clean_payload(payload: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
         """
-        Try to clean payload retrieve by faust.Record.to_representation.
+        Try to clean payload retrieved by faust.Record.to_representation.
         All values inside payload should be native types and not faust.Record
         On Faust versions <=1.9.0 Record.to_representation always returns a dict with native types
-        as a values which are compatible with fastavro.
-        On Faust 1.10.0 <= versions Record.to_representation always returns a dic but values
-        can also be faust.Record, so fastavro is incapable of serialize them
+        as a value which are compatible with fastavro.
+        On Faust 1.10.0 <= versions Record.to_representation always returns a dict but values
+        can also be faust.Record, so fastavro is incapable to serialize them
         Args:
             payload (dict): Payload to clean
         Returns:

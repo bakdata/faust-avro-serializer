@@ -1,4 +1,5 @@
 import typing
+from collections.abc import Mapping, Sequence
 
 import faust
 from schema_registry.client import SchemaRegistryClient
@@ -27,8 +28,8 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
 
     @staticmethod
     def _clean_item(item: typing.Any) -> typing.Any:
-        if isinstance(item, Record):
-            return Serializer._clean_item(item.to_representation())
+        if isinstance(item, faust.Record):
+            return FaustAvroSerializer._clean_item(item.to_representation())
         elif isinstance(item, str):
             # str is also a sequence, need to make sure we don't iterate over it.
             return item

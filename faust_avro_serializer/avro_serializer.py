@@ -26,6 +26,19 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         return self.decode_message(s)
 
     @staticmethod
+    def _clean_item(item: typing.Any) -> typing.Any:
+        if isinstance(item, Record):
+            return Serializer._clean_item(item.to_representation())
+        elif isinstance(item, str):
+            # str is also a sequence, need to make sure we don't iterate over it.
+            return item
+        elif isinstance(item, Mapping):
+            return type(item)({key: FaustAvroSerializer._clean_item(value) for key, value in item.items()})  # type: ignore
+        elif isinstance(item, Sequence):
+            return type(item)(FaustAvroSerializer._clean_item(value) for value in item)  # type: ignore
+        return item
+
+    @staticmethod
     def clean_payload(payload: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
         """
         Try to clean payload retrieved by faust.Record.to_representation.
@@ -39,14 +52,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         Returns:
             dict that represents the clean payload
         """
-        return {
-            key: (
-                FaustAvroSerializer.clean_payload(value.to_representation())  # type: ignore
-                if isinstance(value, faust.Record)
-                else value
-            )
-            for key, value in payload.items()
-            }
+        return FaustAvroSerializer._clean_item(payload)
 
     def _dumps(self, obj: typing.Dict[str, typing.Any]) -> bytes:
         """

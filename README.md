@@ -8,10 +8,15 @@ dynamically.
 ### Example
 
 ```python
+from faust import Record, Schema, Stream
 from faust_avro_serializer import FaustAvroSerializer
 from schema_registry.client import SchemaRegistryClient
+import faust
 
-class MyRecordExample:
+app = faust.App('myapp', broker='kafka://localhost')
+my_topic_name = "my-dummy-topic"
+
+class MyRecordExample(Record):
     _schema = {
      "type": "record",
      "namespace": "com.example",
@@ -25,7 +30,17 @@ class MyRecordExample:
     bar: str
 
 client = SchemaRegistryClient("http://my-schema-registry:8081")
-serializer = FaustAvroSerializer(client,"my-subject")
+serializer = FaustAvroSerializer(client, my_topic_name, False)
+
+schema_with_avro = Schema(key_serializer=str, value_serializer=serializer)
+
+dummy_topic = app.topic(my_topic_name, schema=schema_with_avro)
+
+@app.agents(dummy_topic)
+async def my_agent(myrecord: Stream[MyRecordExample]):
+    async for record in myrecord:
+        print(record.to_representation())
+
 ``` 
 
 When the serializer calls the ``_dumps`` method, it searches for the ``__faust`` field inside the

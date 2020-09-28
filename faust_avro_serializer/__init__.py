@@ -1,6 +1,5 @@
 """Faust serializer that serializes Avro compatible messages"""
 
-
 __version__ = "1.0.1"
 
 

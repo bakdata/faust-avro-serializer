@@ -1,5 +1,5 @@
 import typing
-from typing import Any
+from collections.abc import Mapping, Sequence
 
 import faust
 from schema_registry.client import SchemaRegistryClient
@@ -13,6 +13,7 @@ class MissingSchemaException(Exception):
 
 
 class FaustAvroSerializer(MessageSerializer, faust.Codec):
+
     def __init__(self, client: SchemaRegistryClient, subject: str, is_key=False, **kwargs):
         self.schema_registry_client = client
         self.schema_subject = subject
@@ -25,7 +26,36 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         # method available on MessageSerializer
         return self.decode_message(s)
 
-    def _dumps(self, obj: Any) -> bytes:
+    @staticmethod
+    def _clean_item(item: typing.Any) -> typing.Any:
+        if isinstance(item, faust.Record):
+            return FaustAvroSerializer._clean_item(item.to_representation())
+        elif isinstance(item, str):
+            # str is also a sequence, need to make sure we don't iterate over it.
+            return item
+        elif isinstance(item, Mapping):
+            return type(item)({key: FaustAvroSerializer._clean_item(value) for key, value in item.items()})  # type: ignore
+        elif isinstance(item, Sequence):
+            return type(item)(FaustAvroSerializer._clean_item(value) for value in item)  # type: ignore
+        return item
+
+    @staticmethod
+    def clean_payload(payload: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+        """
+        Try to clean payload retrieved by faust.Record.to_representation.
+        All values inside payload should be native types and not faust.Record
+        On Faust versions <=1.9.0 Record.to_representation always returns a dict with native types
+        as a value which are compatible with fastavro.
+        On Faust 1.10.0 <= versions Record.to_representation always returns a dict but values
+        can also be faust.Record, so fastavro is incapable to serialize them
+        Args:
+            payload (dict): Payload to clean
+        Returns:
+            dict that represents the clean payload
+        """
+        return FaustAvroSerializer._clean_item(payload)
+
+    def _dumps(self, obj: typing.Dict[str, typing.Any]) -> bytes:
         """
         Given a parsed avro schema, encode a record for the given topic.  The
         record is expected to be a dictionary.
@@ -49,6 +79,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
 
         avro_schema = AvroSchema(schema_def)
 
+        obj = self.clean_payload(obj)
         # method available on MessageSerializer
         return self.encode_record_with_schema(
             self.schema_subject, avro_schema, obj, is_key=self.is_key

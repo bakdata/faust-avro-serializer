@@ -18,6 +18,10 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         self.schema_registry_client = client
         self.schema_subject = subject
         self.is_key = is_key
+        self._mapping_key = {
+            True:"key",
+            False:"value"
+        }
 
         MessageSerializer.__init__(self, client)
         faust.Codec.__init__(self, client=client, subject=subject, is_key=is_key, **kwargs)
@@ -82,5 +86,5 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         obj = self.clean_payload(obj)
         # method available on MessageSerializer
         return self.encode_record_with_schema(
-            self.schema_subject, avro_schema, obj, is_key=self.is_key
+            f"{self.schema_subject}-{self._mapping_key[self.is_key]}", avro_schema, obj
         )

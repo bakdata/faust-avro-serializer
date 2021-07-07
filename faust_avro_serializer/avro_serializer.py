@@ -13,15 +13,15 @@ class MissingSchemaException(Exception):
 
 
 class FaustAvroSerializer(MessageSerializer, faust.Codec):
+    _mapping_key = {
+        True: "key",
+        False: "value"
+    }
 
     def __init__(self, client: SchemaRegistryClient, subject: str, is_key=False, **kwargs):
         self.schema_registry_client = client
         self.schema_subject = subject
         self.is_key = is_key
-        self._mapping_key = {
-            True:"key",
-            False:"value"
-        }
 
         MessageSerializer.__init__(self, client)
         faust.Codec.__init__(self, client=client, subject=subject, is_key=is_key, **kwargs)

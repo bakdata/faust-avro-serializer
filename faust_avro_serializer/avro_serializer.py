@@ -13,6 +13,10 @@ class MissingSchemaException(Exception):
 
 
 class FaustAvroSerializer(MessageSerializer, faust.Codec):
+    _mapping_key = {
+        True: "key",
+        False: "value"
+    }
 
     def __init__(self, client: SchemaRegistryClient, subject: str, is_key=False, **kwargs):
         self.schema_registry_client = client
@@ -82,5 +86,5 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         obj = self.clean_payload(obj)
         # method available on MessageSerializer
         return self.encode_record_with_schema(
-            self.schema_subject, avro_schema, obj, is_key=self.is_key
+            f"{self.schema_subject}-{self._mapping_key[self.is_key]}", avro_schema, obj
         )

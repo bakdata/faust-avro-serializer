@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 
 import faust
 from schema_registry.client import SchemaRegistryClient
-from schema_registry.serializers import MessageSerializer
+from schema_registry.serializers import AvroMessageSerializer
 from faust.models.base import registry
 from schema_registry.client.schema import AvroSchema
 
@@ -12,7 +12,7 @@ class MissingSchemaException(Exception):
     pass
 
 
-class FaustAvroSerializer(MessageSerializer, faust.Codec):
+class FaustAvroSerializer(AvroMessageSerializer, faust.Codec):
     _mapping_key = {
         True: "key",
         False: "value"
@@ -23,7 +23,7 @@ class FaustAvroSerializer(MessageSerializer, faust.Codec):
         self.schema_subject = subject
         self.is_key = is_key
 
-        MessageSerializer.__init__(self, client)
+        AvroMessageSerializer.__init__(self, client)
         faust.Codec.__init__(self, client=client, subject=subject, is_key=is_key, **kwargs)
 
     def _loads(self, s: bytes) -> typing.Optional[typing.Dict]:

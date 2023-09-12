@@ -12,7 +12,7 @@ home-page = "https://github.com/bakdata/faust-avro-serializer"
 description-file="README.md"
 requires-python = ">=3.6"
 requires = [
-    "python-schema-registry-client==1.8.2",
+    "python-schema-registry-client==2.5.0",
     "faust-streaming",
     "bump2version"
 ]
